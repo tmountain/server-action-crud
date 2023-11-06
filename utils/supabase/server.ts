@@ -1,8 +1,9 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { Database } from "@/types/supabase";
 
 export const createClient = (cookieStore: ReturnType<typeof cookies>) => {
-  return createServerClient(
+  return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -27,6 +28,22 @@ export const createClient = (cookieStore: ReturnType<typeof cookies>) => {
             // This can be ignored if you have middleware refreshing
             // user sessions.
           }
+        },
+      },
+    }
+  )
+}
+
+export const createSvcClient = (cookieStore: ReturnType<typeof cookies>) => {
+  return createServerClient<Database>(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_SUPABASE_SVC_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return undefined
+        },
+        set(name: string, value: string, options: CookieOptions) {
+        },
+        remove(name: string, options: CookieOptions) {
         },
       },
     }
