@@ -1,4 +1,4 @@
-# Project Title
+# Project Description
 
 Supabase demo using server actions for CRUD
 
@@ -19,8 +19,8 @@ VALUES
 To install the project, run the following commands:
 
 ```bash
-git clone https://your-repository-url.git
-cd your-repository-directory
+git clone https://github.com/tmountain/server-action-crud
+cd server-action-crud
 npm install
 ```
 
@@ -32,4 +32,4 @@ To start the Next.js development server, run:
 npx next dev
 ```
 
-The server will start in development mode and can be accessed at `http://localhost:3000`.
+The server will start in development mode and can be accessed at `http://localhost:3000/notes`.
