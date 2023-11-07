@@ -6,6 +6,9 @@ import { useEffect, useState } from 'react'
 import { upsertNote } from '@/app/actions/notes'
 import { Tables } from '@/types/aliases'
 
+// add useFormState to this form
+// https://github.com/vercel/next.js/blob/canary/examples/next-forms/app/add-form.tsx
+
 interface NotePageProps {
     noteID?: number
 }

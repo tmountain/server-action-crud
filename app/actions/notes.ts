@@ -4,34 +4,42 @@ import { createSvcClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation'
-
-function getStringValue(value: FormDataEntryValue| null): string|undefined {
-    return typeof value === 'string' ? value : undefined;
-}
-
-function getNumberValue(value: FormDataEntryValue | null): number | undefined {
-    if (typeof value === 'string' && value.trim() === '') {
-        return undefined;
-    }
-    const numberValue = Number(value);
-    // Check if the conversion resulted in a valid number and it's not NaN
-    return Number.isFinite(numberValue) ? numberValue : undefined;
-}
+import { z } from 'zod'
+import { zfd } from 'zod-form-data'
 
 export async function upsertNote(formData: FormData) {
     const cookieStore = cookies()
     const supabase = createSvcClient(cookieStore)
-    const origValue = formData.get('id')
-    const id = getNumberValue(formData.get('id'))
+
+    const schema = z.object({
+        id: zfd.numeric(z.number().int().positive().optional()),
+        title: zfd.text(z.string().min(1)),
+    })
+
+    const parseResult = schema.safeParse(
+        {
+            id: formData.get('id'),
+            title: formData.get('title'),
+        }
+    )
+
+    if (!parseResult.success) {
+        return { success: false, error: parseResult.error.message }
+    }
+    const formValues = parseResult.data
+    const isInsert = !formValues.id
 
     const { data, error } = await supabase.from('notes').upsert({
-        id: id,
-        title: getStringValue(formData.get('title'))
+        id: formValues.id,
+        title: formValues.title,
     }).select().single()
 
     if (error) {
         return { success: false, error: error.message }
     }
-    revalidatePath(`/notes/${id}/edit`)
-    redirect(`/notes/${data?.id}/edit`)
+
+    revalidatePath(`/notes/${formValues.id}/edit`)
+    if (isInsert) {
+        return redirect(`/notes/${data?.id}/edit`)
+    }
 }
