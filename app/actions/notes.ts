@@ -3,11 +3,32 @@
 import { createSvcClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation'
+import { Tables } from '@/types/aliases'
 import { z } from 'zod'
 import { zfd } from 'zod-form-data'
 
-export async function upsertNote(formData: FormData) {
+export interface NoteResponse {
+    success: boolean
+    message: string
+    timestamp: string
+    redirect: string
+}
+
+function timestamp(): string {
+    return Date.now().toString()
+}   
+
+export async function deleteNote({ id }: Tables<'notes'>) {
+    const cookieStore = cookies()
+    const supabase = createSvcClient(cookieStore)
+
+    await supabase.from('notes').delete().match({ id: id })
+    console.log(`Deleted note ${id}`)
+    revalidatePath(`/notes`)
+}
+
+export async function upsertNote(prevState: any, formData: FormData): Promise<NoteResponse> {
+    let redirect = ''
     const cookieStore = cookies()
     const supabase = createSvcClient(cookieStore)
 
@@ -24,7 +45,7 @@ export async function upsertNote(formData: FormData) {
     )
 
     if (!parseResult.success) {
-        return { success: false, error: parseResult.error.message }
+        return { success: false, message: parseResult.error.message, timestamp: timestamp(), redirect: redirect }
     }
     const formValues = parseResult.data
     const isInsert = !formValues.id
@@ -35,11 +56,12 @@ export async function upsertNote(formData: FormData) {
     }).select().single()
 
     if (error) {
-        return { success: false, error: error.message }
+        return { success: false, message: error.message, timestamp: timestamp(), redirect: redirect }
     }
 
     revalidatePath(`/notes/${formValues.id}/edit`)
     if (isInsert) {
-        return redirect(`/notes/${data?.id}/edit`)
+        redirect = `/notes/${data?.id}/edit`
     }
+    return { success: true, message: '', timestamp: timestamp(), redirect: redirect }
 }
